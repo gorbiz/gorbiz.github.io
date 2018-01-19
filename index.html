@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>தமிழ்</title>
+
+  <style type="text/css">
+    html, body {
+      margin: 0;
+    }
+    body {
+      font-size: 1.75rem;
+      background: #778;
+    }
+    #screen {
+      text-align: center;
+    }
+
+    #screen .top {
+      height: 3.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #screen .top .tamil-text {
+      position: relative;
+      left: -1rem;
+      top: 1rem;
+    }
+
+    .play {
+      position: absolute;
+      font-size: 3rem;
+      color: green;
+      cursor: pointer;
+    }
+    .play:hover {
+      /* TODO Add easing to hover effect */
+      color: #4d4;
+    }
+
+    #screen .image {
+      display: inline-block;
+      position: relative;
+      padding: 0.5rem;
+      background: #ffe;
+
+      cursor: pointer;
+      opacity: 0.7;
+    }
+    #screen .image:hover {
+      /*opacity: 1.0;*/
+    }
+    #screen .image .image-text {
+      padding-top: 0.5rem;
+    }
+    #screen .image .img-wrapper {
+      width: 250px;
+      height: 300px;
+      overflow: hidden;
+    }
+    #screen .image img {
+      max-width: 250px;
+    }
+  </style>
+
+  <script src="jquery-1.10.2.js"></script>
+  <script src="jquery.easing.1.3.js"></script>
+  <script src='jquery.transit.min.js'></script>
+
+<script type="text/javascript">
+    var VaNakkam =  { phrase: 'வணக்கம்', latinScript: 'VaNakkam' } // XXX The captial "N" should be stressed
+
+    , Amma     =  { phrase: 'அம்மா',   latinScript: 'Amma' }
+    , Appa     =  { phrase: 'அப்பா',    latinScript: 'Appa' }
+    , Thanni   =  { phrase: 'தண்ணீர்', latinScript: 'Thanni' }
+
+    , Pappa           = { phrase: 'பாப்பா', latinScript: 'Pappa', comment: 'Baby or infant' }
+    , AmmaMarrumAppa  = { phrase: 'அம்மா மற்றும் அப்பா', latinScript: 'AmmaMarrumAppa' }
+
+    , Nila    = { phrase: 'நிலா', latinScript: 'Nila',        comment: 'Moon' }
+    , Curiyan = { phrase: 'சூரியன்', latinScript: 'Curiyan', comment: 'Sun' }
+
+    , Kalai     = { phrase: 'காலை', latinScript: 'Kalai', comment: 'Morning' }
+    , Irattiri  = { phrase: 'இராத்திரி', latinScript: 'Irattiri', comment: 'Night' }
+
+    // ---- Very much for me right now ----
+    , Am    = { phrase: 'ஆம்', latinScript: 'Am', comment: 'Yes' }
+    , Illai = { phrase: 'இல்லை', latinScript: 'Illai', comment: 'No' }
+    , ApramPaarakalam     = { phrase: 'அப்ரம் பார்க்கலாம்', latinScript: 'ApramPaarakalam',    comment: 'See you later' }
+    , Mannikkanum         = { phrase: 'மன்னிக்கவும்', latinScript: 'Mannikkanum',              comment: 'Sorry' }
+    , IdhuEnna            = { phrase: 'இது என்ன?', latinScript: 'IdhuEnna',                       comment: 'What is this?' }
+    , IdhuEvvalavu        = { phrase: 'இது எவ்வளவு?', latinScript: 'IdhuEvvalavu',              comment: 'How much is this?' }
+    , EppatiIrukkinga     = { phrase: 'எப்படி இருக்கீங்க?', latinScript: 'EppatiIrukkinga', comment: 'How are you?, I think there is also an informal "Nalamaa?"' }
+    , NallaaIrukeanNandri = { phrase: 'நல்லா இருக்கேன், நன்றி!', latinScript: 'NallaaIrukeanNandri', comment: 'I\'m fine, thanks!' }
+
+    // Two words for Car?:
+    , Kaar   = { phrase: 'கார்', latinScript: 'Kaar',          comment: 'Car' }
+    , Kaaril = { phrase: 'காரில்', latinScript: 'Kaaril', comment: 'car' }
+
+    , Pena    = { phrase: 'பேனா', latinScript: 'Pena',        comment: 'Pen' }
+
+
+
+    // FIXME I've heard that something is wrong with this
+    //, AppaKutittu     = { phrase: 'அப்பா குடித்து', latinScript: 'AppaKutittu' }
+
+    // PoiVarukireyn = { phrase: 'போய்ட்டு வாரேன்', latinScript: 'PoiVarukireyn', comment: 'Goodbye' } // I comment this because "See you later" seems nicer...
+
+    // Alternative to Pappa for Baby:
+    //, Kulantai        = { phrase: 'குழந்தை', latinScript: 'Kulantai' }
+
+    // Alternative to Nila for Moon:
+    //, Santhiran   = { phrase: 'சந்திரன்', latinScript: 'Santhiran', comment: 'Moon' }
+
+    // Apple
+    // Pu = { phrase: ' பூ', latinScript: 'Pu', comment: 'Flower' }
+    // Country
+
+    // AppaEating
+    // Food           - Saapadu
+    // AmmaKutittu
+
+    // Milk
+    // Coffee
+    // Tea
+
+    // Car
+    // [ Something new ]
+    // Bus
+
+    , Placeholder  =  { phrase: '...', latinScript: 'Placeholder' }
+    ;
+
+    // TODO
+    // Potentially use my own editor too to feel more effective
+    // Keep this in mind http://en.wikipedia.org/wiki/Second_language_acquisition#Sequences_of_acquisition
+
+    // Important doing-words & subjects
+    // Drinking
+    // Eating
+    // Go/walk
+    // Food
+    // Rice
+
+    // big, little, hot, cold
+
+    // From Youtube: Learning Tamil through English - Lesson 1 - Basics:
+    // Yes [Amaam], no [illai]
+    // Sun
+    // Moon
+    // Cold (weather)   - similar to English's "cold"
+    // Baby [Papa]
+
+    // From Youtube: Learning Tamil through English - Lesson 2 - Questions:
+    // Where are you? [photo: man on phone] ...The answer to that could be "I am in my car."
+
+    // From Youtube: Learning Tamil through English - Lesson 3 - Numbers:
+    // One, two, three
+
+    // From Youtube: Learning Tamil through English - Lesson 4 - Daly Activities:
+    // Food
+    // I am going to... [verb or location]
+    // Let's go to the beach ~beacheko kolam, very nice and easy!
+    // Bye / see you later/soon (the normal very positive way of saying goodbye)
+    // What did you eat? and I hade dosa/rice.
+    // Him / Her / You / Me/myself / Them / Us
+    // Yours / Theirs / Ours
+    // This / That
+    // Here / There
+
+    // From Youtube: Learning Tamil through English - Lesson 5 - Tenses:
+    // How is it?  - It is good/bad.
+    // How was/will it? - ...
+
+
+    // Starting with the 3 most important numbers and the 3 first colors to be named in emerging language:
+    // One red apple
+    // Two black pens
+    // Three white cars
+
+    // Usefull for directions (and thus travelers)
+    // Right / Left
+    // Up(hill) / Down(hill)
+  </script>
+
+  <script type="text/javascript">
+    //+ Jonas Raoni Soares Silva
+    //@ http://jsfromhell.com/array/shuffle [v1.0]
+    function shuffle(o){ //v1.0
+      for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+      return o;
+    };
+
+    function questionMaker(questions /* XXX this is really a set of sets questions */) {
+      return function(questionIndex) {
+        var question /* XXX ...and this is a set of questions */ = questions[questionIndex];
+        var firstQuestion = 0;
+        if (question.askingSequence) firstQuestion = question.askingSequence[0];
+        var topHtml = render('top', question.parts[firstQuestion]);
+        var optionsHtml = '';
+        //if (typeof question.randomPhotoOrder === 'undefined' || question.randomPhotoOrder === true) {
+        //  question.parts = shuffle(question.parts);
+        //}
+        for (var i = 0; i < question.parts.length; i++) {
+          var part = question.parts[i];
+          part.index = i; // TODO remove this
+          optionsHtml += render('option', part);
+        }
+
+        // FIXME Should use templates
+        var html = topHtml + '<div class="options">' + optionsHtml + '</div>';
+
+        // Attach behaviour
+        var html = $(html).on('click', '.play', function(event) {
+          $(this).siblings('audio').get(0).play();
+        });
+
+        return html;
+      }
+    }
+
+    function render(templateId, data) {
+      var html = $('#' + templateId).text();
+      for (var key in data) {
+        html = html.split('[[' + key + ']]').join(data[key]);
+      }
+      return html;
+    }
+
+    function nextQuestion() {
+      var question = questions[currentQuestion];
+      if (question.parts.length == ++currentPart) {
+        return nextScreen();
+      }
+
+      // FIXME Duplication, making "the top part" happens above as well in questionMaker
+
+      // Ask the next question / part
+      var partIndex = question.askingSequence[currentPart];
+      var html = render('top', question.parts[partIndex]);
+      // Attach behaviour
+      var html = $(html).on('click', '.play', function(event) {
+        $(this).siblings('audio').get(0).play();
+      });
+      $('.top').replaceWith(html);
+
+      // TODO Prettify, also this pause is horrid...
+      setTimeout(function() { $('.top audio').get(0).play(); }, 500);
+    }
+
+    function nextScreen() {
+      currentQuestion++;
+      currentPart = 0;
+      showQuestion(currentQuestion);
+    }
+
+
+
+    var questions = [
+        { parts: [VaNakkam] }
+      , { parts: [Appa, Amma, Thanni], askingSequence: [1, 0, 2] }
+      // TODO Add real voices to all of these
+      , { parts: [Pappa, Amma, AmmaMarrumAppa], askingSequence: [1, 2, 0] }
+
+      // TODO Consider replacing Appa with a new word
+      , { parts: [Nila, Curiyan, Appa], askingSequence: [2, 1, 0] }
+      , { parts: [Kalai, Irattiri, Thanni], askingSequence: [2, 0, 1] }
+      , { parts: [Placeholder] }
+    ];
+
+    var renderQuestion = questionMaker(questions);
+
+    var currentQuestion = 0;
+    var currentPart = 0;
+    $(document).ready(function() {
+      showQuestion(currentQuestion);
+    });
+
+    function showQuestion(index) {
+      var html = renderQuestion(index);
+
+      // Hover effect emphasizing interactivity
+      html = $(html).on('mouseenter', '.image', function() {
+        $(this).css('z-index', 1000);
+        $(this).transition({ scale: 1.03, opacity: 1.0, 'box-shadow': '0 0 40px rgba(255,255,255,0.5)' }, 100, 'easeInOutCirc');
+      });
+      html = $(html).on('mouseleave', '.image', function() {
+        $(this).css('z-index', 1);
+        $(this).transition({ scale: 1.0, opacity: 0.7, 'box-shadow': '0 0 0 #ccc' }, 300, 'easeInOutCirc');
+      });
+
+      html = $(html).on('click', '.image', clickOption);
+
+      $('#screen').html(html);
+
+      // The first time you will be encouraged to (and have to (in order to hear the audio) click the button as to get familiar with the user inferface
+      // TODO Prettify AND unduplicate
+      if (index == 0) {
+        var hover = false;
+        $('.play').hover(function() { hover = true; $(this).stop(); });
+        function animatePulsing(element) {
+          if (hover) return;
+          $(element).transition({ opacity: 1.0  , color: '#0f0', translate: [10, 0] }, 500)
+              .transition({ opacity: 0.25 , color: '#0f0', translate: [0,  0] }, 500, function() {
+                $(this).css('opacity', 1.0);
+                animatePulsing(element);
+              });
+        }
+        animatePulsing('.play');
+      } else {
+        // Autoplay sound unless this is the first screen
+        setTimeout(function() { $('.top audio').get(0).play(); }, 500);
+      }
+    }
+
+    function clickOption(event) {
+      if (this.wasJustClicked) return;
+      this.wasJustClicked = true;
+      var self = this;
+
+      // The index of the answer/option just clicked
+      var answerIndex = this.id.split('-')[1];
+      if (answerIsCorrect(answerIndex)) {
+        // TODO Add text and play button here (before the animation)
+        animateCorrect(this, function() {
+          self.wasJustClicked = false;
+          nextQuestion();
+        });
+      } else {
+        animateIncorrect(this, function() { self.wasJustClicked = false; });
+      }
+    }
+
+    function answerIsCorrect(answerIndex) {
+      var question = questions[currentQuestion];
+      if (question.parts.length == 1) return true;
+      var correctAnswer = question.askingSequence[currentPart];
+      return answerIndex == correctAnswer;
+    }
+
+
+
+    function animateCorrect(element, done) {
+      var speed = 400;
+      $(element).transition({ scale: 0.8, perspective: 300, rotateX: '-=180', translate: [0, 200] }, speed)
+                .transition({ scale: 1.0, perspective: 300, rotateX: '-=180', translate: [0, 0] }, speed, function() {
+                  $(element).css({ rotateX: 0 }); // Hack to make it respond to all hover activity again...
+                  done();
+                });
+    }
+
+    function animateIncorrect(element, done) {
+      var speed = 75;
+      $(element).transition({ rotate: '15deg',  scale: 1.05 }, speed, 'easeOutQuint')
+                .transition({ rotate: '0deg',   scale: 0.95 }, speed, 'easeInQuint')
+                .transition({ rotate: '-15deg', scale: 1.05 }, speed, 'easeOutQuint')
+                .transition({ rotate: '0deg',   scale: 1.00 }, speed, 'easeInOutQuint', done);
+    }
+  </script>
+
+
+
+  <script type="script/template" id="top">
+    <div class="top">
+      <span class="tamil-text">[[phrase]]</span>
+      <audio>
+        <source src="audio/[[latinScript]].ogg" type="audio/ogg">
+        <source src="audio/[[latinScript]].mp3" type="audio/mpeg">
+        <source src="http://translate.google.com/translate_tts?ie=UTF-8&q=[[phrase]]&tl=ta" type="audio/mpeg">
+        Audio not possible.
+      </audio>
+      <span class="play">▶</span>
+    </div>
+  </script>
+
+
+  <script type="script/template" id="option">
+    <div class="image" id="option-[[index]]">
+      <div class="img-wrapper"><img src="images/[[latinScript]].jpg" /></div>
+      <div class="image-text empty">&nbsp;</div>
+    </div>
+  </script>
+</head>
+
+
+
+<body>
+  <div id="screen"></div>
+</body>
+</html>

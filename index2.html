@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>தமிழ்</title>
+
+  <style type="text/css">
+    html, body {
+      margin: 0;
+    }
+    body #wrapper {
+      text-align: center;
+      background: #444;
+    }
+
+    .question-image {
+      height: 480px; /* FIXME Should be ~100% */
+      overflow: hidden;
+      float: left;
+    }
+    .question-image img {
+      width: 350px; /* FIXME Should be a percentage */
+    }
+
+    ul.options {
+      padding-left: 0;
+      width: 600px; /* FIXME Should be a percentage */
+      height: 460px; /* FIXME Should be ~100% */
+      margin: auto;
+      list-style: none;
+      float: right;
+    }
+
+    ul.options li {
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+
+      height: 33.33%;
+      margin-bottom: 15px;
+
+      font-size: 3.5em;
+    }
+
+    ul.options li .option {
+      background: #ccc;
+    }
+    ul.options li .option .text {
+      cursor: pointer;
+      position: relative;
+      top: 0.25em;
+    }
+    ul.options li .option .text span.even {
+      color: #337;
+    }
+    ul.options li .option .text span.odd {
+      color: #753;
+    }
+    .play {
+      cursor: pointer;
+      float: right;
+      font-size: 1.5em;
+      padding: 0 0.4em 0 0.5em;
+      color: #030;
+      background: #0c0;
+    }
+
+    .play.playing {
+      color: #0f0;
+      background: #484;
+    }
+
+    .clear {
+      clear: both;
+    }
+
+    /* FIXME Development hack */
+    .question-image { height: 370px; }
+    ul.options { height: 340px; }
+    ul.options li { font-size: 3.5em; }
+  </style>
+
+  <script src="jquery-1.10.2.js"></script>
+  <script src="handlebars.js"></script>
+  <script type="text/javascript">
+
+    //+ Jonas Raoni Soares Silva
+    //@ http://jsfromhell.com/array/shuffle [v1.0]
+    function shuffle(o){ //v1.0
+      for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+      return o;
+    };
+
+    // Lots of <3 to http://stackoverflow.com/questions/12997994/splitting-complex-text-layout-javascript-unicode-string-to-individual-characters
+    function tamilSplit(string) {
+      var diacritics = {'\u0B82':true,'\u0BBE':true, '\u0BBF':true, '\u0BC0':true, '\u0BC1':true, '\u0BC2':true, '\u0BC6':true, '\u0BC7':true, '\u0BC8':true, '\u0BCA':true, '\u0BCB':true, '\u0BCC':true, '\u0BCD':true, '\u0BD7':true};
+      var result = [];
+      for(var i = 0; i != string.length; ++i){
+        var ch = string[i];
+        diacritics[ch] ? (result[result.length - 1] += ch) : result.push(ch);
+      }
+      return result;
+    }
+
+    function playSound(name, next) {
+      var source = 'audio/' + name + '.mp3'; // Perhaps add more than one format
+      var audio = new Audio(source);
+      audio.addEventListener('ended', next, false);
+      audio.play();
+      // Hacking around a Chromium bug
+      if (/chromium/.test(navigator.userAgent.toLowerCase())) {
+        setTimeout(next, 1000);
+      }
+    }
+
+    $(document).ready(function() {
+
+      Handlebars.registerHelper('zebra', function(number) {
+        return number %2 ? 'odd' : 'even'
+      });
+
+      var answer = init().answer;
+
+      $('body').on('click', '.option', function() {
+        var clicked = $(this).attr('id').split('-')[1];
+        answer(clicked);
+        // TODO Animate, maybe different on correct/incorrect (also to show that this is clickable/tappable)
+      });
+
+      $('body').on('click', '.play', function() {
+        var clicked = $(this).parent().attr('id').split('-')[1];
+        $(this).addClass('playing');
+        playSound(clicked, function(element) {
+              return function() {
+                    $(element).removeClass('playing');
+                  }
+            }(this));
+        return false; // Prevent event bubbling up to ".option"
+      });
+    });
+
+    function questioner() {
+      function selectCorrectAnswer(options) {
+        // TODO Add posibility to override this ...or make it smarter
+        return options[Math.floor(Math.random() * options.length)];
+      }
+      function renderQuestion(options, correctAnswer) {
+        var source    = $("#question-template").html();
+        var template  = Handlebars.compile(source);
+        // As these characters may be foreign
+        var optionsWithPhraseArrays = options.map(function(option) { option.phrase = tamilSplit(option.phrase); return option; });
+        var context   = { correctAnswer: correctAnswer.latinScript, options: optionsWithPhraseArrays };
+        var html      = template(context);
+        $('#wrapper').fadeOut(function(){
+          $('#wrapper').html(html).fadeIn();
+        })
+      }
+
+      var onCorrect = function() {};
+      function setOnCorrect(f) {
+        onCorrect = f;
+      }
+
+      var correctAnswer;
+      var answersGiven = [];
+      function ask(options) {
+        answersGiven = [];
+        options = shuffle(options);
+        correctAnswer = selectCorrectAnswer(options);
+        renderQuestion(options, correctAnswer);
+      }
+
+      function answer(answer) {
+        answersGiven.push(answer);
+        if (answer == correctAnswer.latinScript) {
+          onCorrect(answer, answersGiven);
+          return true;
+        } else {
+          return false;
+        }
+      }
+
+      return {
+            ask: ask
+          , answer: answer
+          , onCorrect: onCorrect
+          , setOnCorrect: setOnCorrect
+        };
+    }
+
+    function init() {
+      var phrases = [
+          { phrase: 'அம்மா',    latinScript: 'Amma',                              comment: 'Mother' }
+        , { phrase: 'அப்பா',    latinScript: 'Appa',                              comment: 'Father' }
+        , { phrase: 'பாப்பா', latinScript: 'Pappa', comesAfter: ['Amma', 'Appa'], comment: 'Baby or infant' }
+
+        , { phrase: 'தண்ணீர்', latinScript: 'Thanni' }
+
+        , { phrase: 'நிலா', latinScript: 'Nila',        comment: 'Moon' }
+        , { phrase: 'சூரியன்', latinScript: 'Curiyan', comment: 'Sun' }
+
+        , { phrase: 'காலை', latinScript: 'Kalai', comment: 'Morning' }
+        , { phrase: 'இராத்திரி', latinScript: 'Irattiri', comment: 'Night' }
+
+        , { phrase: 'கை', latinScript: 'Kai',                                            comment: 'Hand' }
+        , { phrase: 'உள்ளங்கை', latinScript: 'UllanKai',      comesAfter: 'Kai',      comment: 'Palm' } // TODO Get real voice for this
+        // XXX Actually this could come after any "Ulla"-word
+        , { phrase: 'உள்ளே வந்து', latinScript: 'UlleVantu', comesAfter: 'UllanKai', comment: 'Come inside / Welcome' }
+
+        , { phrase: 'அப்புறம் பார்க்கலாம', latinScript: 'AppuramParkkalama', comment: 'See you later' }
+
+        , { phrase: 'யானை', latinScript: 'Yanai', comment: 'Elephant' }
+        , { phrase: 'காக்கை', latinScript: 'Kakkai', comment: 'Crow' }
+        , { phrase: 'மாட்டு', latinScript: 'Mattu', comment: 'Cow' }
+        , { phrase: 'பூனை', latinScript: 'Punai', comment: 'Cat' }
+        , { phrase: 'நாய்', latinScript: 'Nay', comment: 'Dog' }
+        , { phrase: 'மீன்', latinScript: 'Min', comment: 'Fish' }
+        , { phrase: 'எலி', latinScript: 'Eli', comment: 'Rat (or mouse?)' }
+        , { phrase: 'பாம்பு', latinScript: 'Pampu', comment: 'Snake' }
+        , { phrase: 'நீர்யானை', latinScript: 'Niryanai', groupsWellWith: ['Yanai'], comment: 'Hippo, literally: Water Elephant' }
+
+        , { phrase: 'ஆம்',     latinScript: 'HACKAm',    comment: 'Yes - FIXME pressented horribly' }
+        , { phrase: 'இல்லை', latinScript: 'HACKIllai', comment: 'No  - FIXME pressented horribly' }
+        , { phrase: 'நல்லது', latinScript: 'HACKNallatu',    comment: 'Good - FIXME pressented horribly' }
+      ];
+
+      // This particular example could be abstracted into a Yes/No question I guess
+      /*var futureQuestionType = {
+          question: { phrase: '', latinScript: '', comment: 'Is this an apple?' }
+        , correctAnswer: { phrase: '', latinScript: '', comment: 'Yes' }
+        , persistentOptions: { phrase: '', latinScript: '', comment: 'No' }
+        , nrOptions: 3
+      };*/
+
+      function registerCorrect(answer, allAnswers, phrases) {
+        for (var i = 0; i < phrases.length; i++) {
+          if (phrases[i].latinScript != answer) continue;
+          if (typeof phrases[i].nrCorrect === 'undefined') phrases[i].nrCorrect = 0;
+          phrases[i].nrCorrect++;
+          if (allAnswers.length == 1) { // If the learner got it on the first attempt
+            if (typeof phrases[i].nrPerfect === 'undefined') phrases[i].nrPerfect = 0;
+            phrases[i].nrPerfect++;
+          }
+        }
+        return phrases;
+      }
+
+      function nextQuestion(phrases, settings) {
+        if (settings.hideAfterCorrectAnswers) {
+          phrases = phrases.filter(function(element, index, array) {
+            if (typeof element.nrCorrect === 'undefined') return true;
+            return (element.nrCorrect < settings.hideAfterCorrectAnswers);
+          });
+        }
+        if (settings.hideAfterPerfectAnswers) {
+          phrases = phrases.filter(function(element, index, array) {
+            if (typeof element.nrPerfect === 'undefined') return true;
+            return (element.nrPerfect < settings.hideAfterPerfectAnswers);
+          });
+        }
+        phrases = shuffle(phrases);
+        if (phrases.length < 3) alert('You rock this!'); // TODO Something better here
+        return [phrases[0], phrases[1], phrases[2]];
+      }
+
+      // TODO Probably rewrite this without flags, instead decrease likelyhood of showing things you know well...
+      var settings = {
+            hideAfterCorrectAnswers: 2
+          , hideAfterPerfectAnswers: 1
+        };
+
+      // DEBUG
+      //phrases = phrases.splice(-3);
+
+      var q = questioner();
+      q.setOnCorrect(function(answer, allAnswers) {
+        playSound(answer);
+        phrases = registerCorrect(answer, allAnswers, phrases);
+        q.ask(nextQuestion(phrases, settings));
+      });
+      q.ask(nextQuestion(phrases, settings));
+      return q;
+    }
+
+  </script>
+
+  <script id="question-template" type="text/x-handlebars-template">
+    <div class="question-image">
+      <img src="images/{{correctAnswer}}.jpg" />
+    </div>
+    <ul class="options">
+      {{#each options}}
+      <li>
+        <div class="option" id="option-{{latinScript}}">
+          <span class="text">{{#each phrase}}<span class="{{zebra @index}}">{{this}}</span>{{/each}}</span>
+          <span class="play">▶</span>
+          <div class="clear"></div>
+        </div>
+      </li>
+      {{/each}}
+    </ul>
+  </script>
+</head>
+
+<body>
+  <div id="wrapper"></div>
+</body>
+</html>
